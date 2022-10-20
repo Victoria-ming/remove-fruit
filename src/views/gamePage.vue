@@ -15,7 +15,7 @@
         <span> 块数：{{ clearBlockNum }} / {{ totalBlockNum }} </span>
       </div>
     </div>
-    <div>
+    <div class="game">
       <!--通关！-->
       <div v-if="gameStatus === 3" style="text-align: center">
         <h2>恭喜，你赢啦！🎉</h2>
@@ -37,7 +37,7 @@
             }"
             :data-id="block.id"
             :style="{
-              zIndex: block.level,
+              zIndex: totalBlockNum - block.level,
               left: block.x * widthUnit + 'px',
               top: block.y * heightUnit + 'px',
             }"
@@ -196,7 +196,7 @@ export default {
         const newItem = {
           id: index,
           status: 0, // 0 - 正常, 1 - 已点击, 2 - 已消除
-          level: this.totalBlockNum, // 层级----总块数的层级
+          level: 0, // 层级----总块数的层级
           animalType: item, // 展示的动物的字体
           parentBlocks: [], // 高于当前块的集合
           childrenBlocks: [], // 低于当前块的集合
@@ -314,28 +314,23 @@ export default {
       const maxX = Math.min(block.x + 3, this.boxWidthNum);
       const maxY = Math.min(block.y + 3, this.boxWidthNum);
       // 遍历该块附近的格子
+      let maxLevel = 0;
       for (let i = minX; i < maxX; i++) {
         for (let j = minY; j < maxY; j++) {
           // 遍历该块覆盖的范围内有没有跟其它块的范围有交集,
           const relationBlocks = this.chessBoard[i][j].blocks;
           if (relationBlocks.length > 0) {
-            // 在交集范围内的
-            relationBlocks.forEach((item) => {
-              // 遍历坐标点中的集合，去掉id相同的元素
-              if (item.id !== block.id) {
-                /**
-                 * 排除id相同的元素
-                 * 建立关联关系----高于当前块的元素放到父级集合，且当前块的元素放到父级集合对应的子级集合中
-                 */
-                block.parentBlocks.push(item);
-                item.childrenBlocks.push(block);
-              }
-            });
+            // 在交集范围内的 当前位置最后一个块---id最大的块
+            const lastBlockBlock = relationBlocks[relationBlocks.length - 1];
+            if (block.id !== lastBlockBlock.id) {
+              maxLevel = Math.max(maxLevel, lastBlockBlock.level);
+              block.parentBlocks.push(lastBlockBlock);
+              lastBlockBlock.childrenBlocks.push(block);
+            }
           }
         }
       }
-      // 块初始的时候层级是最高的，根据block.aboveCurrentBlocks中的数量减少层级
-      block.level = block.level - block.parentBlocks.length;
+      block.level = maxLevel + 1;
     },
     // 返回
     goHomeView() {
@@ -466,9 +461,15 @@ export default {
 .game-page {
   padding: 16px;
 }
+.game {
+  background: url("../assets/bg.jpeg");
+  background-size: 100% 100%;
+  padding-bottom: 40px;
+}
 .level-board {
   position: relative;
   text-align: center;
+  margin: 0 auto;
 }
 
 .level-block {
