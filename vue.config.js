@@ -5,7 +5,7 @@ module.exports = defineConfig({
     port: 3000,
     open: true,
     // 配置跨域
-    proxy: {},
+    // proxy: {},
   },
   transpileDependencies: true,
 });
